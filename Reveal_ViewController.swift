@@ -1,9 +1,9 @@
 //
 //  Reveal_ViewController.swift
-//  PromaticsSW
+//  Raunka
 //
-//  Created by promatics on 12/27/17.
-//  Copyright © 2017 promatics. All rights reserved.
+//  Created by Gopal krishan on 30/01/18.
+//  Copyright © 2018 Gopal krishan. All rights reserved.
 //
 
 import UIKit
@@ -13,7 +13,7 @@ class Reveal_ViewController: UIViewController {
     @IBInspectable
     open var sideIdentifier:String = "Enter Side Identity" {
         didSet {
-           
+            
         }
     }
     @IBInspectable
@@ -28,12 +28,16 @@ class Reveal_ViewController: UIViewController {
             
         }
     }
-
     
     let sideView = UIView()
     let frontView = UIView()
     private var xConstraint: NSLayoutConstraint!
+    var frontController = UIViewController()
+    var sideController = UIViewController()
     var sideMenuOpen = false
+    
+    let frontTopButton = UIButton()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -42,8 +46,18 @@ class Reveal_ViewController: UIViewController {
         
         NotificationCenter.default.addObserver(self, selector: #selector(toggle), name: NSNotification.Name(rawValue: "Toggle"), object: nil)
         
-        let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(panGesture:)))
-        frontView.addGestureRecognizer(panGesture)
+        NotificationCenter.default.addObserver(forName: NSNotification.Name(rawValue: "pushcontroller"), object: nil, queue: nil) { (data) in
+            
+            let vc = data.userInfo?["vc"] as! UIViewController
+            
+            (((self.frontController as? UINavigationController)?.topViewController as? UITabBarController)?.selectedViewController as? UINavigationController)?.pushViewController(vc, animated: true)
+
+            
+        }
+        
+                let panGesture = UIPanGestureRecognizer(target: self, action: #selector(handlePanGesture(panGesture:)))
+                frontView.addGestureRecognizer(panGesture)
+        
     }
     
     func addController(){
@@ -52,6 +66,7 @@ class Reveal_ViewController: UIViewController {
         
         sideView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(sideView)
+        sideView.backgroundColor = UIColor.clear
         NSLayoutConstraint.activate([
             xConstraint,
             sideView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0),
@@ -63,6 +78,7 @@ class Reveal_ViewController: UIViewController {
         
         frontView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(frontView)
+        frontView.backgroundColor = UIColor.clear
         NSLayoutConstraint.activate([
             frontView.leadingAnchor.constraint(equalTo: sideView.trailingAnchor),
             frontView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0),
@@ -73,7 +89,7 @@ class Reveal_ViewController: UIViewController {
         frontView.layer.borderColor = UIColor.lightGray.cgColor
         // add Side view controller view to Side View
         
-        let sideController = storyboard!.instantiateViewController(withIdentifier: sideIdentifier)
+        sideController = storyboard!.instantiateViewController(withIdentifier: sideIdentifier)
         addChildViewController(sideController)
         sideController.view.translatesAutoresizingMaskIntoConstraints = false
         sideView.addSubview(sideController.view)
@@ -89,7 +105,7 @@ class Reveal_ViewController: UIViewController {
         
         // add front View controller to front View
         
-        let frontController = storyboard!.instantiateViewController(withIdentifier: frontIdentifier)
+        frontController = storyboard!.instantiateViewController(withIdentifier: frontIdentifier)
         addChildViewController(frontController)
         frontController.view.translatesAutoresizingMaskIntoConstraints = false
         frontView.addSubview(frontController.view)
@@ -100,18 +116,22 @@ class Reveal_ViewController: UIViewController {
             frontController.view.bottomAnchor.constraint(equalTo: frontView.bottomAnchor)
             ])
         
+        addfrontButton()
+        
     }
     
-    func toggle(){
+    @objc func toggle(){
         
         if sideMenuOpen{
             xConstraint.constant = -sideWidth
             sideMenuOpen = false
-            
+            frontTopButton.isHidden = true
             
         }else{
+            sideController.viewWillAppear(false)
             xConstraint.constant = 0
             sideMenuOpen = true
+            frontTopButton.isHidden = false
         }
         
         UIView.animate(withDuration: 0.3) {
@@ -119,12 +139,26 @@ class Reveal_ViewController: UIViewController {
         }
     }
     
-    func handlePanGesture(panGesture: UIPanGestureRecognizer) {
+    func addfrontButton(){
+        
+        frontTopButton.addTarget(self, action: #selector(toggle), for: .touchUpInside)
+        frontTopButton.isHidden = true
+        frontTopButton.backgroundColor = UIColor.clear
+        frontTopButton.translatesAutoresizingMaskIntoConstraints = false
+        frontController.view.addSubview(frontTopButton)
+        frontTopButton.backgroundColor = UIColor.clear
+        NSLayoutConstraint.activate([
+            frontTopButton.leadingAnchor.constraint(equalTo: frontView.leadingAnchor),
+            frontTopButton.topAnchor.constraint(equalTo: frontView.topAnchor, constant: 0),
+            frontTopButton.bottomAnchor.constraint(equalTo: frontView.bottomAnchor, constant: 0),
+            frontTopButton.widthAnchor.constraint(equalTo: frontView.widthAnchor)
+            ])
+    }
+
+    @objc func handlePanGesture(panGesture: UIPanGestureRecognizer) {
         
         let translation = panGesture.translation(in: view)
         
-        print(translation)
-      
         if panGesture.state == .began || panGesture.state == .changed {
             
             if xConstraint.constant >= -sideWidth && xConstraint.constant <= 0{
@@ -138,10 +172,13 @@ class Reveal_ViewController: UIViewController {
                 
                 xConstraint.constant = 0
                 sideMenuOpen = true
-            }else{
                 
+            }else{
+
+                sideController.viewWillAppear(false)
                 xConstraint.constant = -sideWidth
                 sideMenuOpen = false
+                
             }
         }
         
