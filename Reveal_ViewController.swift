@@ -134,19 +134,21 @@ class Reveal_ViewController: UIViewController {
             frontTopButton.isHidden = false
         }
         
-        UIView.animate(withDuration: 0.3) {
+        UIView.animate(withDuration: 0.5, delay: 0.1, options: .curveEaseInOut, animations: {
+            self.frontTopButton.alpha = self.frontTopButton.alpha == 0 ? 0.2 : 0
             self.view.layoutIfNeeded()
-        }
+        }, completion: nil)
+
     }
     
     func addfrontButton(){
         
         frontTopButton.addTarget(self, action: #selector(toggle), for: .touchUpInside)
         frontTopButton.isHidden = true
-        frontTopButton.backgroundColor = UIColor.clear
+        frontTopButton.backgroundColor = UIColor.black
+        frontTopButton.alpha = 0
         frontTopButton.translatesAutoresizingMaskIntoConstraints = false
         frontController.view.addSubview(frontTopButton)
-        frontTopButton.backgroundColor = UIColor.clear
         NSLayoutConstraint.activate([
             frontTopButton.leadingAnchor.constraint(equalTo: frontView.leadingAnchor),
             frontTopButton.topAnchor.constraint(equalTo: frontView.topAnchor, constant: 0),
@@ -169,12 +171,12 @@ class Reveal_ViewController: UIViewController {
         
         if panGesture.state == UIGestureRecognizerState.ended {
             if xConstraint.constant > -sideWidth/2{
-                
+                frontTopButton.isHidden = false
                 xConstraint.constant = 0
                 sideMenuOpen = true
                 
             }else{
-
+                frontTopButton.isHidden = true
                 sideController.viewWillAppear(false)
                 xConstraint.constant = -sideWidth
                 sideMenuOpen = false
